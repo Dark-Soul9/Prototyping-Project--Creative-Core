@@ -5,36 +5,21 @@ using UnityEngine;
 public class HandScript : MonoBehaviour
 {
     private Animator anim;
-    private bool win;
-    private bool startShooting;
     private Transform pos; //player position
+    private int playerInput;
     private void Start()
     {
         anim = GetComponent<Animator>();
-        win = true;
-        startShooting = true;
         pos = GetComponent<Transform>();
     }
     private void Update()
     {
-        if (startShooting) //when rock paper scissors round is done do this.
-        {
-            if (!win && anim.GetCurrentAnimatorStateInfo(0).IsName("Idle")) //moves only if lost the round and currently not moving.
-            {
-                if(Input.GetKeyDown(KeyCode.W))
-                {
-                    anim.SetTrigger("Start");
-                }
-            }
-            else //shoots only if won the round.
-            {
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
-                    Shoot();
-                    startShooting = false;
-                }
-            }
-        }
+        Manager.Instance.GetPlayerPlay(playerInput);
+        shootingSession();
+    }
+    public void GetPlayerInput(int input)
+    {
+        playerInput = input;
     }
     void Shoot()
     {
@@ -43,5 +28,46 @@ public class HandScript : MonoBehaviour
         {
             Debug.Log("shoot " + hitInfo.transform.name);
         }
+        Manager.Instance.StopShootingSession();
     }
+    void shootingSession()
+    {
+        if (Manager.Instance.shootSession) //when rock paper scissors round is done do this.
+        {
+            if(Manager.Instance.result == null)
+            {
+                return;
+            }
+            if(Manager.Instance.result == "Draw")
+            {
+                StartCoroutine(ResetOnDraw());
+                return;
+            }
+            else if (Manager.Instance.result == "Loss") //moves only if lost the round and currently not moving.
+            {
+                if (Input.GetKeyDown(KeyCode.W))
+                {
+                    if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+                    {
+                        return;
+                    }
+                    anim.SetTrigger("Start");
+                }
+            }
+            else //shoots only if won the round.
+            {
+                if (Input.GetKeyDown(KeyCode.T))
+                {
+                    Manager.Instance.StartShootingSession();
+                    Shoot();
+                }
+            }
+        }
+    }
+    IEnumerator ResetOnDraw()
+    {
+        yield return new WaitForSeconds(3f);
+        Manager.Instance.StopShootingSession();
+    }
+    
 }

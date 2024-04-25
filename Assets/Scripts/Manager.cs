@@ -6,14 +6,12 @@ public class Manager : MonoBehaviour
 {
     private int currentEnemyHand;
     private int currentPlayerHand;
-    private string result;
+    public string result { get; private set; }
     public bool hasWon { get; private set; }
     public bool draw { get; private set; }
-    public bool gameRunning { get; private set; }
-    public bool moving { get; private set; }
-    public bool shootingActive { get; private set; }
-    public bool canShoot { get; private set; }
-    public bool recieveInput = true;
+    public bool shootSession { get; private set; }
+    private bool resultCalculated;
+    private bool recieveInput = true;
     private static Manager _instance;
 
     public static Manager Instance
@@ -31,78 +29,62 @@ public class Manager : MonoBehaviour
         _instance = this;
         DontDestroyOnLoad(gameObject);
     }
-    public void GetHandPlay(int hand, string type)
+    private void Start()
     {
-        if (type == "Player")
-        {
-            currentPlayerHand = hand;
-        }
-        else if (type == "Enemy")
-        {
-            currentEnemyHand = hand;
-        }
+        shootSession = false;
+    }
+    public void GetPlayerPlay(int hand)
+    {
+        currentPlayerHand = hand;
+    }
+    public void GetEnemyPlay(int hand)
+    {
+        currentEnemyHand = hand;
     }
     string ReturnResult(int playerPlay, int enemyPlay)
     {
         if (playerPlay == enemyPlay)
         {
             draw = true;
-            StartCoroutine(ResetAfterDraw());
             return "Draw";
         }
         else if ((playerPlay == 0 && enemyPlay == 2) || (playerPlay == 1 && enemyPlay == 0) || (playerPlay == 2 && enemyPlay == 1))
         {
             hasWon = true;
-            canShoot = true;
             return "Win";
         }
         else
         {
             hasWon = false;
-            canShoot = false;
             return "Loss";
         }
     }
-    public void DisplayResult()
+
+    public void OnConfirmClick()
     {
-        result = ReturnResult(currentPlayerHand, currentEnemyHand);
-        Debug.Log("Result = " + result + " PlayerHand = " + currentPlayerHand + " EnemyHand = " + currentEnemyHand);
+        if(!recieveInput)
+        {
+            return;
+        }
+        StartShootingSession();
+    }    
+
+    public void StartShootingSession()
+    {
+        if (!resultCalculated)
+        {
+            result = ReturnResult(currentPlayerHand, currentEnemyHand);
+            Debug.Log("Result = " + result + " PlayerHand = " + currentPlayerHand + " EnemyHand = " + currentEnemyHand);
+            resultCalculated = true;
+        }
+        shootSession = true;
+        recieveInput = false;
     }
 
-    public void StartNew()
+    public void StopShootingSession()
     {
-        gameRunning = true;
-        moving = false;
-        hasWon = false;
-        draw = false;
-        shootingActive = false;
-        canShoot = false;
+        resultCalculated = false;
+        shootSession = false;
         recieveInput = true;
     }
-    
-    public void StartShootingSequence()
-    {
-        recieveInput = false;
-        gameRunning = false;
-        shootingActive = true;
-        moving = true;
-    }
-    public void StopShootingSequence()
-    {
-        StartNew();
-    }
-    IEnumerator ResetAfterDraw()
-    {
-        yield return new WaitForSeconds(2f);
-        StartNew();
-    }
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Space) && recieveInput)
-        {
-            DisplayResult();
-            StartShootingSequence();
-        }
-    }
-
 }
