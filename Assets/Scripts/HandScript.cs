@@ -12,6 +12,8 @@ public class HandScript : MonoBehaviour
     private bool bluff;
     public bool dodge;
     private bool shootingDone;
+    [SerializeField] private GameObject movingButtons;
+    [SerializeField] private GameObject shootingButtons;
     private void Start()
     {
         anim = GetComponent<Animator>();
@@ -38,7 +40,7 @@ public class HandScript : MonoBehaviour
         if (Physics.Raycast(pos.position, Vector3.forward, out hitInfo, 8f))
         {
             Debug.Log("shoot " + hitInfo.transform.name);
-            if (handScriptAI.dodge == 0 || (handScriptAI.dodge == 1 && bluff))
+            if (handScriptAI.dodge == 0 && !bluff || (handScriptAI.dodge == 1 && bluff))
             {
                 handScriptAI.handCount--;
             }
@@ -47,6 +49,12 @@ public class HandScript : MonoBehaviour
                 Manager.Instance.GameOver("Congatulations! You Won");
             }
         }
+        StartCoroutine(WaitForAnimation());
+    }
+    IEnumerator WaitForAnimation()
+    {
+        yield return new WaitForSeconds(1f);
+
         Manager.Instance.StopShootingSession();
     }
     void shootingSession()
@@ -59,7 +67,6 @@ public class HandScript : MonoBehaviour
             }
             if(Manager.Instance.result == "Draw")
             {
-                StartCoroutine(ResetOnDraw());
                 return;
             }
             else if (Manager.Instance.result == "Loss") //moves only if lost the round and currently not moving.
@@ -94,7 +101,10 @@ public class HandScript : MonoBehaviour
     public void Bluff(bool shoot)
     {
         Manager.Instance.StartShootingSession();
-        if(!shoot)
+        shootingButtons.SetActive(false);
+        handScriptAI.move = true;
+        handScriptAI.dodge = Random.Range(0, 2);
+        if (!shoot)
         {
             bluff = true;
             Shoot();
@@ -104,8 +114,6 @@ public class HandScript : MonoBehaviour
             bluff = false;
             Shoot();
         }
-        handScriptAI.move = true;
-        handScriptAI.dodge = Random.Range(0, 2);
         shootingSession();
         handScriptAI.ShootingSession();
         //Manager.Instance.StopShootingSession();
@@ -113,7 +121,9 @@ public class HandScript : MonoBehaviour
     public void Dodge(bool move)
     {
         Manager.Instance.StartShootingSession();
-        if(move)
+        movingButtons.SetActive(false);
+        handScriptAI.bluff = Random.Range(0, 2);
+        if (move)
         {
             dodge = true;
         }
@@ -121,7 +131,6 @@ public class HandScript : MonoBehaviour
         {
             dodge = false;
         }
-        handScriptAI.bluff = Random.Range(0, 2);
         shootingSession();
         handScriptAI.ShootingSession();
         //Manager.Instance.StopShootingSession();

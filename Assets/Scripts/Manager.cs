@@ -12,6 +12,8 @@ public class Manager : MonoBehaviour
     private bool recieveInput = true;
     public bool gameOver { get; private set; }
     private static Manager _instance;
+    [SerializeField] private GameObject movingButtons;
+    [SerializeField] private GameObject shootingButtons;
 
     public static Manager Instance
     {
@@ -49,10 +51,12 @@ public class Manager : MonoBehaviour
         }
         else if ((playerPlay == 0 && enemyPlay == 2) || (playerPlay == 1 && enemyPlay == 0) || (playerPlay == 2 && enemyPlay == 1))
         {
+            shootingButtons.SetActive(true);
             return "Win";
         }
         else
         {
+            movingButtons.SetActive(true);
             return "Loss";
         }
     }

@@ -26,7 +26,10 @@ public class HandScriptAI : MonoBehaviour
             return;
         }
         Manager.Instance.GetEnemyPlay(Random.Range(0, 3));
-        //ShootingSession();
+        if(Manager.Instance.result == "Draw")
+        {
+            StartCoroutine(ResetOnDraw());
+        }
     }
     //IEnumerator Movement()
     //{
@@ -39,7 +42,7 @@ public class HandScriptAI : MonoBehaviour
         if (Physics.Raycast(pos.position, Vector3.back, out hitInfo, 8f))
         {
             Debug.Log("shoot " + hitInfo.transform.name);
-            if(!handScript.dodge || (handScript.dodge && bluff == 1))
+            if(!handScript.dodge && bluff == 0 || (handScript.dodge && bluff == 1))
             {
                 handScript.handCount--;
             }
@@ -60,7 +63,6 @@ public class HandScriptAI : MonoBehaviour
             }
             if(Manager.Instance.result == "Draw")
             {
-                StartCoroutine(ResetOnDraw());
                 return;
             }
             else if (Manager.Instance.result == "Win") //moves only if lost the round and currently not moving.
