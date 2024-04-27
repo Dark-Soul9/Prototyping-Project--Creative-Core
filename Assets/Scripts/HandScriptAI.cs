@@ -6,38 +6,51 @@ using UnityEngine;
 public class HandScriptAI : MonoBehaviour
 {
     private Animator anim;
-    private float shootDelay;
     private Transform pos; //enemy position
-    private string tempResult;
-
+    public int handCount;
+    private HandScript handScript;
+    public int bluff, dodge;
+    public bool move;
 
     private void Start()
     {
         anim = GetComponent<Animator>();
-        shootDelay = 3f;
         pos = GetComponent<Transform>();
+        handScript = GameObject.Find("Player").GetComponent<HandScript>();
+        handCount = 2;
     }
     private void Update()
     {
+        if(Manager.Instance.gameOver)
+        {
+            return;
+        }
         Manager.Instance.GetEnemyPlay(Random.Range(0, 3));
-        ShootingSession();
+        //ShootingSession();
     }
-    IEnumerator Movement()
-    {
-        yield return new WaitForSeconds(Random.Range(0f, 1f));
-        anim.SetTrigger("Start");
-
-    }
+    //IEnumerator Movement()
+    //{
+    //    yield return new WaitForSeconds(Random.Range(0f, 1f));
+    //    anim.SetTrigger("Start");
+    //}
     void Shoot()
     {
         RaycastHit hitInfo;
-        if(Physics.Raycast(pos.position, Vector3.back, out hitInfo, 8f))
+        if (Physics.Raycast(pos.position, Vector3.back, out hitInfo, 8f))
         {
             Debug.Log("shoot " + hitInfo.transform.name);
+            if(!handScript.dodge || (handScript.dodge && bluff == 1))
+            {
+                handScript.handCount--;
+            }
+            if(handScript.handCount < 1)
+            {
+                Manager.Instance.GameOver("Game Over");
+            }
         }
         Manager.Instance.StopShootingSession();
     }
-    void ShootingSession()
+    public void ShootingSession()
     {
         if (Manager.Instance.shootSession) //when rock paper scissors round is done do this.
         {
@@ -52,22 +65,15 @@ public class HandScriptAI : MonoBehaviour
             }
             else if (Manager.Instance.result == "Win") //moves only if lost the round and currently not moving.
             {
-                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+                if (dodge == 0)
                 {
                     return;
                 }
-                StartCoroutine(Movement());
+                anim.SetTrigger("Start");
             }
             else //shoots only if won the round.
             {
-                Manager.Instance.StartShootingSession();
-                if (shootDelay > Time.deltaTime)
-                {
-                    shootDelay -= Time.deltaTime;
-                    return;
-                }
                 Shoot();
-                shootDelay = 3f;
             }
         }
     }
@@ -75,5 +81,22 @@ public class HandScriptAI : MonoBehaviour
     {
         yield return new WaitForSeconds(3f);
         Manager.Instance.StopShootingSession();
+    }
+    public void SetDifficulty(int difficulty)
+    {
+        switch(difficulty)
+        {
+            case 0:
+                handCount = 2;
+                break;
+            case 1:
+                handCount = 3;
+                break;
+            case 2:
+                handCount = 5;
+                break;
+            default:
+                break;
+        }
     }
 }

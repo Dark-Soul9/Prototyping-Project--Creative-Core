@@ -7,15 +7,26 @@ public class HandScript : MonoBehaviour
     private Animator anim;
     private Transform pos; //player position
     private int playerInput;
+    public int handCount;
+    private HandScriptAI handScriptAI;
+    private bool bluff;
+    public bool dodge;
+    private bool shootingDone;
     private void Start()
     {
         anim = GetComponent<Animator>();
         pos = GetComponent<Transform>();
+        handScriptAI = GameObject.Find("Enemy").GetComponent<HandScriptAI>();
+        handCount = 2;
     }
     private void Update()
     {
-        Manager.Instance.GetPlayerPlay(playerInput);
-        shootingSession();
+        if (Manager.Instance.gameOver)
+        {
+            return;
+        }
+        //Manager.Instance.GetPlayerPlay(playerInput);
+        //shootingSession();
     }
     public void GetPlayerInput(int input)
     {
@@ -27,6 +38,14 @@ public class HandScript : MonoBehaviour
         if (Physics.Raycast(pos.position, Vector3.forward, out hitInfo, 8f))
         {
             Debug.Log("shoot " + hitInfo.transform.name);
+            if (handScriptAI.dodge == 0 || (handScriptAI.dodge == 1 && bluff))
+            {
+                handScriptAI.handCount--;
+            }
+            if (handScriptAI.handCount < 1)
+            {
+                Manager.Instance.GameOver("Congatulations! You Won");
+            }
         }
         Manager.Instance.StopShootingSession();
     }
@@ -45,29 +64,67 @@ public class HandScript : MonoBehaviour
             }
             else if (Manager.Instance.result == "Loss") //moves only if lost the round and currently not moving.
             {
-                if (Input.GetKeyDown(KeyCode.W))
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Idle") || !dodge)
                 {
-                    if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
-                    {
-                        return;
-                    }
-                    anim.SetTrigger("Start");
+                    return;
                 }
+                anim.SetTrigger("Start");
             }
-            else //shoots only if won the round.
-            {
-                if (Input.GetKeyDown(KeyCode.T))
-                {
-                    Manager.Instance.StartShootingSession();
-                    Shoot();
-                }
-            }
+            //else //shoots only if won the round.
+            //{
+            //    if(!shootingDone)
+            //    {
+            //        if (bluff)
+            //        {
+            //            //Manager.Instance.StopShootingSession();
+            //            return;
+            //        }
+            //        Shoot();
+            //        bluff = true;
+            //        shootingDone = true;
+            //    }
+            //}
         }
     }
     IEnumerator ResetOnDraw()
     {
         yield return new WaitForSeconds(3f);
         Manager.Instance.StopShootingSession();
+    }
+    public void Bluff(bool shoot)
+    {
+        Manager.Instance.StartShootingSession();
+        if(!shoot)
+        {
+            bluff = true;
+            Shoot();
+        }
+        else
+        {
+            bluff = false;
+            Shoot();
+        }
+        handScriptAI.move = true;
+        handScriptAI.dodge = Random.Range(0, 2);
+        shootingSession();
+        handScriptAI.ShootingSession();
+        //Manager.Instance.StopShootingSession();
+    }
+    public void Dodge(bool move)
+    {
+        Manager.Instance.StartShootingSession();
+        if(move)
+        {
+            dodge = true;
+        }
+        else
+        {
+            dodge = false;
+        }
+        handScriptAI.bluff = Random.Range(0, 2);
+        shootingSession();
+        handScriptAI.ShootingSession();
+        //Manager.Instance.StopShootingSession();
     }
     
 }

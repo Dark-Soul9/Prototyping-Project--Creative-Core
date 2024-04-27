@@ -7,11 +7,10 @@ public class Manager : MonoBehaviour
     private int currentEnemyHand;
     private int currentPlayerHand;
     public string result { get; private set; }
-    public bool hasWon { get; private set; }
-    public bool draw { get; private set; }
     public bool shootSession { get; private set; }
     private bool resultCalculated;
     private bool recieveInput = true;
+    public bool gameOver { get; private set; }
     private static Manager _instance;
 
     public static Manager Instance
@@ -32,11 +31,12 @@ public class Manager : MonoBehaviour
     private void Start()
     {
         shootSession = false;
+        gameOver = false;
     }
-    public void GetPlayerPlay(int hand)
-    {
-        currentPlayerHand = hand;
-    }
+    //public void GetPlayerPlay(int hand)
+    //{
+    //    currentPlayerHand = hand;
+    //}
     public void GetEnemyPlay(int hand)
     {
         currentEnemyHand = hand;
@@ -45,46 +45,56 @@ public class Manager : MonoBehaviour
     {
         if (playerPlay == enemyPlay)
         {
-            draw = true;
             return "Draw";
         }
         else if ((playerPlay == 0 && enemyPlay == 2) || (playerPlay == 1 && enemyPlay == 0) || (playerPlay == 2 && enemyPlay == 1))
         {
-            hasWon = true;
             return "Win";
         }
         else
         {
-            hasWon = false;
             return "Loss";
         }
     }
 
-    public void OnConfirmClick()
+    public void OnConfirmClick(int playerhand)
     {
-        if(!recieveInput)
+        currentPlayerHand = playerhand;
+        if(!recieveInput || gameOver)
         {
             return;
         }
-        StartShootingSession();
+        CalculateResult();
     }    
 
     public void StartShootingSession()
     {
+        shootSession = true;
+        recieveInput = false;
+        resultCalculated = false;
+        //StopShootingSession();
+    }
+    public void CalculateResult()
+    {
         if (!resultCalculated)
         {
             result = ReturnResult(currentPlayerHand, currentEnemyHand);
-            Debug.Log("Result = " + result + " PlayerHand = " + currentPlayerHand + " EnemyHand = " + currentEnemyHand);
             resultCalculated = true;
+            //result = "Win";
+            Debug.Log("Result = " + result + " PlayerHand = " + currentPlayerHand + " EnemyHand = " + currentEnemyHand);
         }
-        shootSession = true;
-        recieveInput = false;
     }
 
     public void StopShootingSession()
     {
+        Debug.Log("Shooting Stopped");
         resultCalculated = false;
         shootSession = false;
         recieveInput = true;
+    }
+
+    public void GameOver(string gameOverText)
+    {
+        gameOver = true;
     }
 }
